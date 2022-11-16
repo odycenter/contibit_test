@@ -34,3 +34,25 @@ VALUES
 
 /*!40000 ALTER TABLE `cb_user` ENABLE KEYS */;
 UNLOCK TABLES;
+
+
+DROP TABLE IF EXISTS `cb_account_book`;
+
+CREATE TABLE `cb_account_book` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` bigint(20) NOT NULL COMMENT '會員ID',
+  `target_id` bigint(20) NOT NULL COMMENT '轉給誰',
+  `transfer_type` tinyint(2) NOT NULL COMMENT '(in)轉入(out)轉出',
+  `coin` varchar(20) NOT NULL DEFAULT '' COMMENT '幣種',
+  `amount` decimal(30,10) NOT NULL COMMENT '轉帳金額',
+  `status` tinyint(2) NOT NULL COMMENT '(0)完成(1)失敗',
+  `api_timestamp` varchar(255) NOT NULL DEFAULT '',
+  `api_datetime` datetime NOT NULL,
+  `api_key` varchar(255) NOT NULL DEFAULT '',
+  `create_datetime` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `api_key` (`api_key`),
+  KEY `user_id` (`user_id`),
+  KEY `target_id` (`target_id`),
+  KEY `api_key_2` (`api_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

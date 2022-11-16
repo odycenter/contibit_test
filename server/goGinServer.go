@@ -48,7 +48,7 @@ func ChannelInfo() {
 			config.RWMUTEX.Unlock()
 			transfer_num++
 			// 收取資料滿200筆 開始計算帳變
-			if transfer_num >= 200 {
+			if transfer_num >= 100 {
 				service.StartTransfer()
 				transfer_num = 0
 			}
@@ -57,7 +57,7 @@ func ChannelInfo() {
 			config.RWMUTEX.RLock()
 			lastApiTimestamp = config.LAST_API_TIMESTAMP
 			config.RWMUTEX.RUnlock()
-			if lastApiTimestamp > 0 && now-lastApiTimestamp > 100 {
+			if lastApiTimestamp > 0 && now-lastApiTimestamp > 10000 {
 				config.RWMUTEX.Lock()
 				config.LAST_API_TIMESTAMP = 0
 				config.RWMUTEX.Unlock()

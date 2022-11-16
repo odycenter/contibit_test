@@ -34,7 +34,7 @@ var REDIS_KEY string
 var CTX context.Context
 var RWMUTEX sync.RWMutex
 var LAST_API_TIMESTAMP int64
-var COUNTER int64
+var COUNTER int64 = 1
 
 var COIN_FLOW chan string = make(chan string, 400)
 var LAST_TRANSFER_TIME chan int64 = make(chan int64, 400)

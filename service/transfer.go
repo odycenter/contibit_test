@@ -22,7 +22,7 @@ func TransferInfoToRedis(apiTimestamp int64, params string) {
 		config.COUNTER = 0
 	}
 	config.RWMUTEX.Unlock()
-
+	params = params[:len(params)-1] + `, "api_key": "` + tools.Int64ToString(apiTimestamp) + "-" + tools.Int64ToString(counter) + `"}`
 	err := redisClient.HSet("TRANSFER", tools.Int64ToString(apiTimestamp)+"-"+tools.Int64ToString(counter), params).Err()
 	if err != nil {
 		log.Println(err)
@@ -43,11 +43,12 @@ func StartTransfer() {
 		// log.Println(info)
 		finish = TransferToMysql(redisKey, info)
 		if finish {
-			log.Println("完成轉帳", redisKey)
+			log.Println("完成轉帳", redisKey, info)
 			redisClient.Del("TRANSFER", redisKey)
 		}
 		infos_num++
 	}
+	log.Println("＋＋＋＋＋＋＋＋ redis 總共處理數量 ", infos_num)
 	if infos_num == 0 {
 		log.Println("redis無資料")
 	}
@@ -66,12 +67,12 @@ func TransferToMysql(redisKey string, info string) bool {
 	db, dbErr := sql.Open("mysql", config.DB_CONNECT)
 
 	var id int
-	transferInfo := db.QueryRow("SELECT `id` FROM `cb_account_book` WHERE `api_kei`=?", data.ApiKey)
+	transferInfo := db.QueryRow("SELECT `id` FROM `cb_account_book` WHERE `api_key`=?", data.ApiKey)
 	switch err := transferInfo.Scan(&id); err {
 	case sql.ErrNoRows:
 		checkMysqlTransferInfo = true
 	default:
-		panic(err)
+		log.Println("連線錯誤", data.ApiKey)
 	}
 
 	tools.CheckErr(dbErr)
@@ -100,7 +101,6 @@ func TransferToMysql(redisKey string, info string) bool {
 			}
 			user_num++
 		}
-
 		// 使用者帳戶未被凍結 且餘額足夠 開始轉帳
 		if user_num == 2 && fromUserBalance > data.Amount {
 			stmt0, err := tx.Prepare("UPDATE `cb_user` SET `balance_usdt` = ? WHERE `id` = ?")
@@ -114,7 +114,7 @@ func TransferToMysql(redisKey string, info string) bool {
 			}
 			stmt1.Exec(toUserBalance+data.Amount, toUser)
 
-			stmt2, err := tx.Prepare("INSERT INTO `cb_account_book` (`user_id`, `target_id`, `transfer_type`, `coin`, `amount`, `status`, `api_timestamp`, `api_datetime`, `api_kei`, `create_datetime`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+			stmt2, err := tx.Prepare("INSERT INTO `cb_account_book` (`user_id`, `target_id`, `transfer_type`, `coin`, `amount`, `status`, `api_timestamp`, `api_datetime`, `api_key`, `create_datetime`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
 			if err != nil {
 				log.Println(err.Error())
 			}
@@ -124,7 +124,7 @@ func TransferToMysql(redisKey string, info string) bool {
 			}
 			stmt2.Exec(data.UserId, data.TargetId, transferType, data.Coin, data.Amount, 1, data.ApiTimestamp, data.ApiDatetime, redisKey, thisTime)
 
-			log.Println(data.UserId, data.TargetId, transferType, data.Coin, data.Amount, 1, tools.Int64ToString(data.ApiTimestamp), data.ApiDatetime, thisTime)
+			// log.Println(data.UserId, data.TargetId, transferType, data.Coin, data.Amount, 1, tools.Int64ToString(data.ApiTimestamp), data.ApiDatetime, thisTime)
 
 			finish = true
 		} else {
