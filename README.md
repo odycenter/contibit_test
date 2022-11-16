@@ -9,7 +9,7 @@ contibit golang test
 
     1. 使用gin套件 建立api環境
     2. 將所有收到訂單 使用channel 推送至redis 若需要更保險 會需要一個非同步寫入mysql內 當作log 儲存
-    3. 紀錄最後api時間戳(LAST_API_TIMESTAMP) 若超過100ms 無新資料輸入 則處理目前資料
+    3. 紀錄最後api時間戳(LAST_API_TIMESTAMP) 若超過10s 無新資料輸入 則處理目前資料
     4. 若golang crash 重新啟動 會先檢測 redis 內是否有資料未處理 若是有 則進入處理訂單流程
     5. 處理訂單流程 鎖定 row lock 檢查會員餘額 -> 檢查目標會員資格(未凍結) -> 修改餘額 -> 寫入帳本
 

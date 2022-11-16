@@ -44,7 +44,7 @@ func StartTransfer() {
 		finish = TransferToMysql(redisKey, info)
 		if finish {
 			log.Println("完成轉帳", redisKey, info)
-			redisClient.Del("TRANSFER", redisKey)
+			redisClient.HDel("TRANSFER", redisKey)
 		}
 		infos_num++
 	}
