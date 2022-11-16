@@ -10,6 +10,7 @@ import (
 	"contibit_test/tools"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/shopspring/decimal"
 )
 
 // api 收到的資料寫入 redis 保存
@@ -87,7 +88,10 @@ func TransferToMysql(redisKey string, info string) bool {
 		var user_num int64 = 0
 		userInfo, err := db.Query("SELECT `id`, `balance_usdt` FROM `cb_user` WHERE (`id`=? or `id`=?) AND `user_status` = 0 FOR UPDATE", data.UserId, data.TargetId)
 		var fromUser, toUser int64 = data.UserId, data.TargetId
-		var fromUserBalance, toUserBalance float64 = 0.0, 0.0
+		var fromUserBalance float64 = 0.0
+		// var toUserBalance float64 = 0.0
+		var fromUserBalanceDecimal, toUserBalanceDecimal decimal.Decimal
+		var finalFromUserBalance, finalToUserBalance float64 = 0.0, 0.0
 		for userInfo.Next() {
 			if err := userInfo.Scan(&user.Id, &user.BalanceUSDT); err != nil {
 				log.Println(err)
@@ -95,9 +99,11 @@ func TransferToMysql(redisKey string, info string) bool {
 			// log.Println(user)
 			if user.Id == fromUser {
 				fromUserBalance = user.BalanceUSDT
+				fromUserBalanceDecimal = decimal.NewFromFloat(user.BalanceUSDT)
 			}
 			if user.Id == toUser {
-				toUserBalance = user.BalanceUSDT
+				// toUserBalance = user.BalanceUSDT
+				toUserBalanceDecimal = decimal.NewFromFloat(user.BalanceUSDT)
 			}
 			user_num++
 		}
@@ -107,12 +113,17 @@ func TransferToMysql(redisKey string, info string) bool {
 			if err != nil {
 				log.Println(err.Error())
 			}
-			stmt0.Exec(fromUserBalance-data.Amount, fromUser)
+			finalFromUserBalance, _ = fromUserBalanceDecimal.Sub(decimal.NewFromFloat(data.Amount)).Float64()
+
+			stmt0.Exec(finalFromUserBalance, fromUser)
 			stmt1, err := tx.Prepare("UPDATE `cb_user` SET `balance_usdt` = ? WHERE `id` = ?")
 			if err != nil {
 				log.Println(err.Error())
 			}
-			stmt1.Exec(toUserBalance+data.Amount, toUser)
+			finalToUserBalance, _ = toUserBalanceDecimal.Add(decimal.NewFromFloat(data.Amount)).Float64()
+			log.Println("XXXXXXXXXXXXXX", finalToUserBalance, fromUserBalance, data.Amount)
+
+			stmt1.Exec(finalToUserBalance, toUser)
 
 			stmt2, err := tx.Prepare("INSERT INTO `cb_account_book` (`user_id`, `target_id`, `transfer_type`, `coin`, `amount`, `status`, `api_timestamp`, `api_datetime`, `api_key`, `create_datetime`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
 			if err != nil {
