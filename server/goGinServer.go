@@ -57,7 +57,7 @@ func ChannelInfo() {
 			config.RWMUTEX.RLock()
 			lastApiTimestamp = config.LAST_API_TIMESTAMP
 			config.RWMUTEX.RUnlock()
-			if lastApiTimestamp > 0 && now-lastApiTimestamp > 10000 {
+			if lastApiTimestamp > 0 && now-lastApiTimestamp > 5000 {
 				config.RWMUTEX.Lock()
 				config.LAST_API_TIMESTAMP = 0
 				config.RWMUTEX.Unlock()
