@@ -1,0 +1,19 @@
+{
+  "threads": 4,
+  "name": "ContiBit_test",
+  "version": "v0.01",
+  "mysql": {
+    "mysqlHost": "127.0.0.1",
+    "mysqlUser": "root",
+    "mysqlPwd": "ody12345",
+    "mysqlDb": "contibit_test",
+    "mysqlPort": 3306
+  },
+  "redis": {
+    "redisHost": "127.0.0.1",
+    "redisPwd": "ody12345$",
+    "redisDb": 0,
+    "redisPort": 6379,
+    "redisKey": ""
+  }
+}
